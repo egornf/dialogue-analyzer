@@ -1,0 +1,41 @@
+name: Build and Package Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt streamlit pyinstaller
+
+      - name: Run pipeline self-test
+        run: |
+          python create_sample_excel.py
+          python main.py --mock -i sample_dialogues.xlsx -o test_output.xlsx
+
+      - name: Package application ZIP
+        run: |
+          Compress-Archive -Path main.py, llm_client.py, dialog_parser.py, evaluator.py, aggregator.py, excel_exporter.py, app.py, create_sample_excel.py, config.json, requirements.txt, install.bat, run_gui.bat, run_mock_test.bat, sample_dialogues.xlsx, README.md -DestinationPath dialogue-analyzer-windows.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dialogue-analyzer-windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
