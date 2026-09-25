@@ -62,10 +62,31 @@ with st.sidebar:
     st.header("📋 Чек-лист оценки")
     passing_pct = st.number_input("Порог сдачи (%)", min_value=1.0, max_value=100.0, value=float(default_config.get("passing_score_percentage", 70.0)))
     
-    st.write(f"Активных критериев в чек-листе: **{len(default_config.get('checklist', []))}**")
-    with st.expander("Посмотреть критерии"):
-        for c in default_config.get("checklist", []):
-            st.markdown(f"**{c['name']}** (макс. {c['max_score']} б., вес {c['weight']})  \n*{c['description']}*")
+    checklist_data = default_config.get("checklist", [])
+    st.write(f"Активных критериев в чек-листе: **{len(checklist_data)}**")
+    
+    with st.expander("👀 Посмотреть текущие критерии"):
+        for c in checklist_data:
+            st.markdown(f"• **{c['name']}** (макс. {c.get('max_score', 10)} б., вес {c.get('weight', 1.0)})  \n  _{c.get('description', '')}_")
+
+    with st.expander("✏️ Редактировать чек-лист (JSON)"):
+        st.caption("Вы можете изменить названия, описания или добавить новые критерии:")
+        checklist_raw = st.text_area(
+            "Список критериев в формате JSON:",
+            value=json.dumps(checklist_data, ensure_ascii=False, indent=2),
+            height=260
+        )
+        if st.button("💾 Сохранить новый чек-лист"):
+            try:
+                parsed_checklist = json.loads(checklist_raw)
+                default_config["checklist"] = parsed_checklist
+                default_config["passing_score_percentage"] = passing_pct
+                with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+                    json.dump(default_config, f, ensure_ascii=False, indent=2)
+                st.success("Чек-лист успешно сохранен в config.json!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Ошибка сохранения: {e}")
 
 # Основная область
 col1, col2 = st.columns([1, 1])
