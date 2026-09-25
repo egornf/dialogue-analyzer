@@ -33,8 +33,10 @@ class ExcelExporter:
         evaluations: List[DialogueEvaluation],
         summary: AggregateSummary,
         output_path: str | Path,
-        config: Dict[str, Any]
+        config: Any = None
     ):
+        if not config or not isinstance(config, dict):
+            config = {}
         wb = openpyxl.Workbook()
         # Удаляем дефолтный лист
         wb.remove(wb.active)
@@ -230,7 +232,9 @@ class ExcelExporter:
         ws.views.sheetView[0].showGridLines = True
         thin_border = cls._get_borders()
 
-        checklist = config.get("checklist", [])
+        checklist = config.get("checklist", []) if config else []
+        if not checklist and evaluations and evaluations[0].criteria:
+            checklist = [{"id": c.criterion_id, "name": c.criterion_name} for c in evaluations[0].criteria]
 
         # Формируем динамические заголовки
         headers = [

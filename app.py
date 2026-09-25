@@ -158,7 +158,7 @@ if raw_bytes:
         # Экспорт в Excel
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_out:
             tmp_out_path = tmp_out.name
-        ExcelExporter.export(evaluations, summary, tmp_out_path)
+        ExcelExporter.export(evaluations, summary, tmp_out_path, config=default_config)
 
         st.success("🎉 Анализ успешно завершен!")
 
